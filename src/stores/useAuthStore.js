@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export const useAuthStore = create(
     persist(
-        (set) => ({
+        (set, get) => ({
             userId: null,
             token: null,
             role: null,
@@ -12,8 +12,27 @@ export const useAuthStore = create(
             profilePicture: null,
             login: (token, { userId, name, role, email, profilePicture }) =>
                 set({ token, userId, name, role, email, profilePicture }),
-            logout: () =>
-                set({ token: null, userId: null, name: null, role: null, email: null, profilePicture: null }),
+            logout: () => {
+                // Limpiar el estado
+                set({ 
+                    token: null, 
+                    userId: null, 
+                    name: null, 
+                    role: null, 
+                    email: null, 
+                    profilePicture: null 
+                });
+                
+                // Limpiar localStorage manualmente para asegurar que se elimine
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('auth-storage');
+                }
+            },
+            // Método para verificar si el usuario está autenticado
+            isAuthenticated: () => {
+                const state = get();
+                return !!state.token;
+            }
         }),
         {
             name: 'auth-storage', // unique name for localStorage key
@@ -25,6 +44,12 @@ export const useAuthStore = create(
                 email: state.email,
                 profilePicture: state.profilePicture
             }), // only persist these fields
+            // Agregar manejo de errores para la persistencia
+            onRehydrateStorage: () => (state) => {
+                if (state) {
+                    console.log('Auth state rehydrated:', state);
+                }
+            },
         }
     )
 );

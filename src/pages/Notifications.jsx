@@ -10,35 +10,67 @@ import VisitDetailsDialog from "@/components/VisitDetailsDialog"
 
 export default function NotificationsPage() {
   const [notificationList, setNotificationList] = useState(notifications)
-  const [visits, setVisits] = useState([])
+  const [pendingVisits, setPendingVisits] = useState([])
+  const [respondedVisits, setRespondedVisits] = useState([])
+  const [newVisitRequests, setNewVisitRequests] = useState(0)
+  const [newVisitResponses, setNewVisitResponses] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const { token } = useAuthStore()
 
   useEffect(() => {
     if (token) {
-      fetchVisits()
+      fetchVisitNotifications()
     }
   }, [token])
 
-  const fetchVisits = async () => {
+  const fetchVisitNotifications = async () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await visitService.getUserVisits(token)
-      setVisits(response.content || [])
+      const response = await visitService.getVisitNotifications(token)
+      setPendingVisits(response.pendingVisits || [])
+      setRespondedVisits(response.respondedVisits || [])
+      setNewVisitRequests(response.newVisitRequests || 0)
+      setNewVisitResponses(response.newVisitResponses || 0)
     } catch (err) {
       setError(err.message)
-      console.error('Error fetching visits:', err)
+      console.error('Error fetching visit notifications:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleMarkAllAsRead = () => {
-    setNotificationList((prev) =>
-      prev.map((n) => ({ ...n, read: true }))
-    )
+  const handleMarkAllAsRead = async () => {
+    setNotificationList((prev) => prev.map((n) => ({ ...n, read: true })))
+    if (!token) return
+    try {
+      await visitService.markVisitNotificationsAsRead(token, 'request')
+      await visitService.markVisitNotificationsAsRead(token, 'responses')
+      fetchVisitNotifications()
+    } catch (err) {
+      console.error('Error al marcar todas las notificaciones de visitas como leídas:', err)
+    }
+  }
+
+  const handleMarkRequestsAsRead = async () => {
+    if (!token) return
+    try {
+      await visitService.markVisitNotificationsAsRead(token, 'request')
+      fetchVisitNotifications()
+    } catch (err) {
+      console.error('Error al marcar solicitudes como leídas:', err)
+    }
+  }
+
+  const handleMarkResponsesAsRead = async () => {
+    if (!token) return
+    try {
+      await visitService.markVisitNotificationsAsRead(token, 'responses')
+      fetchVisitNotifications()
+    } catch (err) {
+      console.error('Error al marcar respuestas como leídas:', err)
+    }
   }
 
   const getStatusColor = (status) => {
@@ -102,15 +134,27 @@ export default function NotificationsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Visit Petitions Section */}
+          {pendingVisits.length > 0 && newVisitRequests > 0 && (
+            <div className="flex justify-end mb-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={handleMarkRequestsAsRead}
+              >
+                Marcar solicitudes como leídas
+              </Button>
+            </div>
+          )}
           <Collapsible>
             <CollapsibleTrigger className="w-full">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Calendar className="h-5 w-5" />
                   <span className="font-medium">Solicitudes de Visita</span>
-                  {visits.length > 0 && (
+                  {pendingVisits.length > 0 && (
                     <Badge variant="secondary" className="ml-2">
-                      {visits.length}
+                      {newVisitRequests > 0 ? `${newVisitRequests} nuevas` : pendingVisits.length}
                     </Badge>
                   )}
                 </div>
@@ -130,19 +174,19 @@ export default function NotificationsPage() {
                     variant="outline" 
                     size="sm" 
                     className="mt-2"
-                    onClick={fetchVisits}
+                    onClick={fetchVisitNotifications}
                   >
                     Reintentar
                   </Button>
                 </div>
-              ) : visits.length === 0 ? (
+              ) : pendingVisits.length === 0 ? (
                 <div className="text-center py-8">
                   <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">No tienes solicitudes de visita</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {visits.map((visit) => (
+                  {pendingVisits.map((visit) => (
                     <VisitDetailsDialog key={visit.id} visit={visit}>
                       <div className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
                         <div className="rounded-full p-2 bg-blue-500">
@@ -164,7 +208,7 @@ export default function NotificationsPage() {
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <User className="h-3 w-3 text-muted-foreground" />
-                                  <span className="text-xs text-muted-foreground">{visit.ownerName}</span>
+                                  <span className="text-xs text-muted-foreground">{visit.visitorName || visit.ownerName}</span>
                                 </div>
                               </div>
                             </div>
@@ -188,43 +232,102 @@ export default function NotificationsPage() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Regular Notifications Section */}
+          {/* Visit Responses Section */}
+          {respondedVisits.length > 0 && newVisitResponses > 0 && (
+            <div className="flex justify-end mb-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={handleMarkResponsesAsRead}
+              >
+                Marcar respuestas como leídas
+              </Button>
+            </div>
+          )}
           <Collapsible>
             <CollapsibleTrigger className="w-full">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Bell className="h-5 w-5" />
-                  <span className="font-medium">Notificaciones Generales</span>
-                  {notificationList.filter(n => !n.read).length > 0 && (
+                  <span className="font-medium">Respuestas a Mis Visitas</span>
+                  {respondedVisits.length > 0 && (
                     <Badge variant="secondary" className="ml-2">
-                      {notificationList.filter(n => !n.read).length}
+                      {newVisitResponses > 0 ? `${newVisitResponses} nuevas` : respondedVisits.length}
                     </Badge>
                   )}
                 </div>
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="space-y-4">
-                {notificationList.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Cargando respuestas...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                  <p className="text-sm text-red-600">{error}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={fetchVisitNotifications}
                   >
-                    <div className={`rounded-full p-2 ${getIconBackground(notification.type)}`}>
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium">{notification.title}</h3>
-                      <p className="text-sm text-muted-foreground">{notification.message}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{notification.time}</span>
+                    Reintentar
+                  </Button>
+                </div>
+              ) : respondedVisits.length === 0 ? (
+                <div className="text-center py-8">
+                  <Bell className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No tienes respuestas a tus solicitudes de visita</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {respondedVisits.map((visit) => (
+                    <VisitDetailsDialog key={visit.id} visit={visit}>
+                      <div className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer">
+                        <div className="rounded-full p-2 bg-green-500">
+                          <Eye className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium truncate">{visit.publicationTitle}</h3>
+                              <p className="text-sm text-muted-foreground truncate">{visit.publicationAddress}</p>
+                              <div className="flex items-center gap-4 mt-2">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">{formatDate(visit.visitDate)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">{formatTime(visit.visitTime)}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs text-muted-foreground">{visit.ownerName || visit.visitorName}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <Badge className={`${getStatusColor(visit.status)} border`}>
+                              {getStatusText(visit.status)}
+                            </Badge>
+                          </div>
+                          {visit.hasNewResponse && (
+                            <div className="mt-2">
+                              <Badge variant="destructive" className="text-xs">
+                                Nueva respuesta
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    {!notification.read && <div className="h-2 w-2 rounded-full bg-primary mt-2"></div>}
-                  </div>
-                ))}
-              </div>
+                    </VisitDetailsDialog>
+                  ))}
+                </div>
+              )}
             </CollapsibleContent>
           </Collapsible>
         </CardContent>

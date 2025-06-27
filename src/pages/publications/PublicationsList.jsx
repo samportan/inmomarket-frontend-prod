@@ -39,14 +39,20 @@ export default function PublicationsList() {
   });
 
   useEffect(() => {
+    // Always fetch publications (with or without token)
+    fetchPublications(token);
+    
+    // Only fetch favorites if authenticated
     if (token) {
-      fetchPublications(token);
       fetchFavorites(token, 0);
     }
   }, [token, fetchPublications, fetchFavorites]);
 
   const handleSearch = async () => {
-    if (!token) return;
+    if (!token) {
+      toast.error("Debes iniciar sesión para usar filtros avanzados");
+      return;
+    }
 
     // Verificar si hay algún filtro aplicado
     const hasFilters = Object.values(filters).some(value => value !== '');
@@ -114,9 +120,8 @@ export default function PublicationsList() {
       furnished: ''
     });
     setSearchTerm('');
-    if (token) {
-      fetchPublications(token);
-    }
+    // Always fetch publications (with or without token)
+    fetchPublications(token);
   };
 
   // Función para filtrar las publicaciones localmente

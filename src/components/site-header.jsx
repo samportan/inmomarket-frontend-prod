@@ -121,13 +121,13 @@ export function SiteHeader() {
               variant="outline"
               asChild
             >
-              <Link to="/login">Login</Link>
+              <Link to="/login">Iniciar sesión</Link>
             </Button>
             <Button
               variant="primary"
               asChild
             >
-              <Link to="/register">Register</Link>
+              <Link to="/register">Registrarse</Link>
             </Button>
           </div>
         )}

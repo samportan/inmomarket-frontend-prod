@@ -13,8 +13,8 @@ export function PropertyRoute() {
 
     useEffect(() => {
         const loadPublication = async () => {
-            // If we don't have publications and we have a token, fetch them
-            if (publications.length === 0 && token) {
+            // If we don't have publications, fetch them (with or without token)
+            if (publications.length === 0) {
                 await fetchPublications(token);
             }
 
@@ -30,9 +30,7 @@ export function PropertyRoute() {
             setHasAttemptedLoad(true);
         };
 
-        if (token) {
-            loadPublication();
-        }
+        loadPublication();
     }, [id, token, publications, loading, navigate, fetchPublications, hasAttemptedLoad]);
 
     return <PropertyClientView />;

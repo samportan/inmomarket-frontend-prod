@@ -1,6 +1,8 @@
-import { Home, Bell, Newspaper, Heart, Building2, MessageSquareWarning } from "lucide-react";
+import { Home, Bell, Newspaper, Heart, Building2, MessageSquareWarning, CalendarCog } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
+import { Badge } from './ui/badge'
+import { useVisitsStore } from '../stores/useVisitsStore'
 
 import {
   Sidebar,
@@ -43,11 +45,28 @@ const items = [
     url: "/my-publications",
     icon: Newspaper,
   },
+  {
+    title: "Visitas",
+    url: "/visits",
+    icon: CalendarCog,
+  }
 ];
 
 export function AppSidebar({ props }) {
-  const { role } = useAuthStore();
-  
+  const { role, token } = useAuthStore();
+  const isLoggedIn = !!token;
+  const newVisitRequests = useVisitsStore((state) => state.newVisitRequests)
+  const newVisitResponses = useVisitsStore((state) => state.newVisitResponses)
+  const totalVisitNotifications = (newVisitRequests || 0) + (newVisitResponses || 0)
+
+  // Filtrar items según autenticación
+  const filteredItems = items.filter(item => {
+    if (["Notificaciones", "Wishlist", "Mis avisos", "Visitas"].includes(item.title)) {
+      return isLoggedIn;
+    }
+    return true;
+  });
+
   return (
     <Sidebar
       className="top-[--header-height] !h-[calc(100svh-var(--header-height))]"
@@ -77,12 +96,17 @@ export function AppSidebar({ props }) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link to={item.url}>
+                    <Link to={item.url} className="flex items-center gap-2 relative">
                       <item.icon />
                       <span>{item.title}</span>
+                      {item.title === 'Notificaciones' && isLoggedIn && totalVisitNotifications > 0 && (
+                        <Badge variant="secondary" className="ml-2">
+                          {totalVisitNotifications}
+                        </Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

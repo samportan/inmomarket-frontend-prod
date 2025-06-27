@@ -21,30 +21,28 @@ export const useHomeListingsStore = create((set, get) => ({
     try {
       set({ loading: true, error: null });
 
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       // Fetch popular properties
       const popularResponse = await axios.get(
         `${API_BASE_URL}/publications/mostPopularPublications`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers }
       );
 
       // Fetch new listings
       const newListingsResponse = await axios.get(
         `${API_BASE_URL}/publications/lastPublications`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers }
       );
 
-      // Get favorites from the favorites store
-      const favorites = useFavoritesStore.getState().favorites;
+      // Get favorites from the favorites store (only if authenticated)
+      const favorites = token ? useFavoritesStore.getState().favorites : [];
       const favoriteIds = new Set(favorites.map(fav => fav.id));
 
       // Transform the data to match our ExpandedPropertyCard component
@@ -99,7 +97,7 @@ export const useHomeListingsStore = create((set, get) => ({
         errorMessage = error.response.data.message;
       } else if (error.message === 'Invalid response format from API') {
         errorMessage = 'Formato de respuesta inválido del servidor';
-      } else if (error.response?.status === 401) {
+      } else if (error.response?.status === 401 && token) {
         errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente';
       } else if (error.response?.status === 403) {
         errorMessage = 'No tienes permiso para acceder a estos datos';

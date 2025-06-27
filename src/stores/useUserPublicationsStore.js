@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from './useAuthStore';
 
 export const useUserPublicationsStore = create((set, get) => ({
     publications: [],
@@ -75,7 +75,7 @@ export const useUserPublicationsStore = create((set, get) => ({
             console.error('Error fetching user publications:', error)
             const isUnauthorized = error.response?.status === 401;
             if (isUnauthorized) {
-                useAuth.logout();
+                useAuthStore.getState().logout();
             }
 
             set({ 

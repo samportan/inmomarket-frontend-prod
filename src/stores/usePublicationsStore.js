@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from './useAuthStore';
 
 export const usePublicationsStore = create((set, get) => ({
     publications: [],
@@ -29,14 +29,15 @@ export const usePublicationsStore = create((set, get) => ({
     fetchPublications: async (token) => {
         try {
             set({ loading: true, error: null });
+            
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await axios.get(
                 `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/publications/All`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
+                { headers }
             );
 
             // Transform the data to match our ExpandedPropertyCard component
@@ -74,8 +75,8 @@ export const usePublicationsStore = create((set, get) => ({
             });
         } catch (error) {
             const isUnauthorized = error.response?.status === 401;
-            if (isUnauthorized) {
-                useAuth.logout();
+            if (isUnauthorized && token) {
+                useAuthStore.getState().logout();
             }
 
             set({ 
@@ -143,7 +144,7 @@ export const usePublicationsStore = create((set, get) => ({
         } catch (error) {
             const isUnauthorized = error.response?.status === 401;
             if (isUnauthorized) {
-                useAuth.logout();
+                useAuthStore.getState().logout();
             }
 
             set({ 
@@ -157,10 +158,14 @@ export const usePublicationsStore = create((set, get) => ({
     fetchPublicationById: async (id, token) => {
         try {
             set({ loading: true, error: null });
+            
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/publications/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers
             });
 
             const pub = response.data;
@@ -168,7 +173,7 @@ export const usePublicationsStore = create((set, get) => ({
                 id: pub.id,
                 imageUrl: pub.propertyImageUrls?.[0] || '/placeholder.svg',
                 images: pub.propertyImageUrls || [],
-                title: pub.propertyTitle || `${pub.typeName} en ${pub.neighborhood}`,
+                title: pub.propertyTitle || `${pub.typeName} in ${pub.neighborhood}`,
                 price: `$${pub.propertyPrice.toLocaleString()}`,
                 location: `${pub.municipality}, ${pub.department}`,
                 bedrooms: pub.propertyBedrooms,
@@ -202,8 +207,8 @@ export const usePublicationsStore = create((set, get) => ({
             return transformedPublication;
         } catch (error) {
             const isUnauthorized = error.response?.status === 401;
-            if (isUnauthorized) {
-                useAuth.logout();
+            if (isUnauthorized && token) {
+                useAuthStore.getState().logout();
             }
 
             set({ 

@@ -9,6 +9,7 @@ import { useHomeListingsStore } from "@/stores/useHomeListingsStore"
 import { useNavigate } from "react-router-dom"
 import axios from 'axios';
 import { toast } from "sonner";
+import { useVisitsStore } from '@/stores/useVisitsStore'
 
 // Improved Carousel with better UX
 function PropertyCarousel({properties, onFavoriteChange}) {
@@ -123,6 +124,7 @@ export default function Home() {
   const { token } = useAuthStore();
   const { fetchFavorites, toggleFavorite } = useFavoritesStore();
   const { popularProperties, newListings, loading, error, fetchHomeListings, isDataLoaded, updateFavoriteStatus } = useHomeListingsStore();
+  const fetchVisitNotifications = useVisitsStore((state) => state.fetchVisitNotifications)
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
 
@@ -156,27 +158,28 @@ export default function Home() {
 
   useEffect(() => {
     const loadData = async () => {
-      if (token) {
-        try {
-          // Only fetch if data isn't already loaded
-          if (!isDataLoaded) {
-            await Promise.all([
-              fetchFavorites(token, 0),
-              fetchHomeListings(token)
-            ]);
-          }
-        } catch (error) {
-          console.error('Error loading data:', error);
-        } finally {
-          setIsInitialLoad(false);
+      try {
+        // Always fetch home listings (with or without token)
+        if (!isDataLoaded) {
+          await fetchHomeListings(token);
         }
-      } else {
+        
+        // Only fetch user-specific data if authenticated
+        if (token) {
+          await Promise.all([
+            fetchFavorites(token, 0),
+            fetchVisitNotifications()
+          ]);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
         setIsInitialLoad(false);
       }
     };
 
     loadData();
-  }, [token, fetchFavorites, fetchHomeListings, isDataLoaded]);
+  }, [token, fetchFavorites, fetchHomeListings, isDataLoaded, fetchVisitNotifications]);
 
   // Show loading state during initial load
   if (isInitialLoad || loading) {

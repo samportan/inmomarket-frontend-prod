@@ -97,7 +97,7 @@ export default function PropertyClientView() {
 
   useEffect(() => {
     const loadData = async () => {
-      if (publications.length === 0 && token) {
+      if (publications.length === 0) {
         try {
           await fetchPublications(token);
         } catch (error) {

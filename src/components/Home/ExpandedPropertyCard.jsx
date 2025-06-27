@@ -1,4 +1,4 @@
-import { BedDouble, MapPin, Layers, Bath } from "lucide-react";
+import { BedDouble, MapPin, Layers } from "lucide-react";
 import { Badge } from "@/components/ui/badge.jsx";
 import { FavoriteButton } from "@/components/ui/favoriteButton";
 import { Link } from "react-router-dom";
@@ -13,7 +13,8 @@ export default function ExpandedPropertyCard(props) {
     price = "$450,000",
     location = "Seattle",
     bedrooms = 3,
-    bathrooms = 2,
+    floors = 1,
+    parking = 1,
     publisherName = "Jane Cooper",
     isNew = false,
     favorited = false,
@@ -80,8 +81,12 @@ export default function ExpandedPropertyCard(props) {
               <span>{bedrooms}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Bath className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>{bathrooms}</span>
+              <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>{floors}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="6" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
+              <span>{parking}</span>
             </div>
           </div>
           <div className="text-xs text-muted-foreground">{publisherName}</div>
