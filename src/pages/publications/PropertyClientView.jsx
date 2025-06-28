@@ -47,7 +47,7 @@ export default function PropertyClientView() {
     const checkFavoriteStatus = async () => {
       if (token && property?.id) {
         try {
-          const response = await fetch(`http://localhost:8080/api/favorites/check/${property.id}`, {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/favorites/check/${property.id}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }

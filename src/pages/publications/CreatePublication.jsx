@@ -462,7 +462,7 @@ export default function CreatePublication() {
             })
 
             const response = await axios.post(
-                'http://localhost:8080/api/publications/create',
+                `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/publications/create`,
                 formDataToSend,
                 {
                     headers: {
