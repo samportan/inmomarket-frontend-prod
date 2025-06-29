@@ -19,6 +19,7 @@ export default function ExpandedPropertyCard(props) {
     isNew = false,
     favorited = false,
     onFavoriteChange,
+    isPending = false,
   } = props;
 
   const slug = title
@@ -61,6 +62,7 @@ export default function ExpandedPropertyCard(props) {
           <FavoriteButton
             isFavorited={favorited}
             onFavoriteChange={onFavoriteChange}
+            isPending={isPending}
           />
         </div>
 

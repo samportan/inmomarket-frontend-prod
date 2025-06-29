@@ -8,7 +8,16 @@ import { PageHeader } from "@/components/ui/page-header";
 import { toast } from "sonner";
 
 export default function Favorites() {
-  const { favorites, loading, error, totalPages, currentPage, fetchFavorites, toggleFavorite } = useFavoritesStore();
+  const { 
+    favorites, 
+    loading, 
+    error, 
+    totalPages, 
+    currentPage, 
+    pendingToggles,
+    fetchFavorites, 
+    toggleFavoriteOptimistic 
+  } = useFavoritesStore();
   const { token } = useAuthStore();
 
   useEffect(() => {
@@ -23,12 +32,16 @@ export default function Favorites() {
       return;
     }
 
+    // Check if this toggle is already in progress
+    if (pendingToggles.has(id)) {
+      return;
+    }
+
     try {
-      const result = await toggleFavorite(token, id);
+      const result = await toggleFavoriteOptimistic(token, id);
       if (result.success) {
-        toast.success(isFavorite ? "Agregado a favoritos" : "Eliminado de favoritos");
-        // Refresh the favorites list
-        fetchFavorites(token, currentPage);
+        // No need to show success toast for removal since it's immediate
+        // The UI is already updated optimistically
       } else {
         toast.error(result.error || "Error al actualizar favoritos");
       }
@@ -88,6 +101,7 @@ export default function Favorites() {
                 key={property.id}
                 {...property}
                 favorited={true}
+                isPending={pendingToggles.has(property.id)}
                 onFavoriteChange={(newState) =>
                   handleFavoriteChange(property.id, newState)
                 }

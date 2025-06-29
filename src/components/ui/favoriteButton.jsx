@@ -3,13 +3,20 @@ import { useState } from "react";
 export function FavoriteButton({
                                  isFavorited: initialFavorited = false,
                                  onFavoriteChange,
-                                 ariaLabel = "Add to wishlist"
+                                 ariaLabel = "Add to wishlist",
+                                 isPending = false
                                }) {
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
 
   const toggleFavorite = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Prevent multiple clicks while pending
+    if (isPending) {
+      return;
+    }
+    
     const newValue = !isFavorited;
     setIsFavorited(newValue);
     if (onFavoriteChange) onFavoriteChange(newValue);
@@ -20,7 +27,10 @@ export function FavoriteButton({
       aria-label={ariaLabel}
       type="button"
       onClick={toggleFavorite}
-      className="w-8 h-8 flex items-center justify-center rounded-full group transition"
+      disabled={isPending}
+      className={`w-8 h-8 flex items-center justify-center rounded-full group transition ${
+        isPending ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/20'
+      }`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +40,7 @@ export function FavoriteButton({
         strokeWidth={2}
         className={`w-6 h-6 transition ${
           !isFavorited ? "group-hover:opacity-80" : ""
-        }`}
+        } ${isPending ? "animate-pulse" : ""}`}
         aria-hidden="true"
         focusable="false"
       >
