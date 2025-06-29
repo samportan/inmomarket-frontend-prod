@@ -1,8 +1,9 @@
 import { Home, Bell, Newspaper, Heart, Building2, MessageSquareWarning, CalendarCog } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/useAuthStore";
 import { Badge } from './ui/badge'
 import { useVisitsStore } from '../stores/useVisitsStore'
+import { useSidebar } from './ui/sidebar'
 
 import {
   Sidebar,
@@ -58,6 +59,8 @@ export function AppSidebar({ props }) {
   const newVisitRequests = useVisitsStore((state) => state.newVisitRequests)
   const newVisitResponses = useVisitsStore((state) => state.newVisitResponses)
   const totalVisitNotifications = (newVisitRequests || 0) + (newVisitResponses || 0)
+  const location = useLocation();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   // Filtrar items según autenticación
   const filteredItems = items.filter(item => {
@@ -66,6 +69,21 @@ export function AppSidebar({ props }) {
     }
     return true;
   });
+
+  // Helper function to check if a route is active
+  const isRouteActive = (url) => {
+    if (url === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(url);
+  };
+
+  // Handle mobile navigation - close sidebar after clicking
+  const handleMobileNavigation = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar
@@ -98,8 +116,8 @@ export function AppSidebar({ props }) {
             <SidebarMenu>
               {filteredItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link to={item.url} className="flex items-center gap-2 relative">
+                  <SidebarMenuButton asChild isActive={isRouteActive(item.url)}>
+                    <Link to={item.url} className="flex items-center gap-2 relative" onClick={handleMobileNavigation}>
                       <item.icon />
                       <span>{item.title}</span>
                       {item.title === 'Notificaciones' && isLoggedIn && totalVisitNotifications > 0 && (
@@ -119,8 +137,8 @@ export function AppSidebar({ props }) {
             <SidebarGroupLabel>Administración</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem key="Reportes">
-                <SidebarMenuButton asChild>
-                  <Link to="/reportes">
+                <SidebarMenuButton asChild isActive={isRouteActive('/reportes')}>
+                  <Link to="/reportes" onClick={handleMobileNavigation}>
                     <MessageSquareWarning />
                     <span>Reportes</span>
                   </Link>

@@ -61,14 +61,14 @@ function PropertyCarousel({properties, onFavoriteChange}) {
   }
 
   return (
-    <div className="relative group">
+    <div className="relative">
       {/* Left button */}
       <button
         aria-label="Scroll left"
         className={`absolute -left-2 top-1/2 -translate-y-1/2 z-10 
                    w-11 h-11 rounded-full flex items-center justify-center
                    bg-background/90 hover:bg-background shadow-md border
-                   transition-all duration-200 ${!canScrollLeft ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}`}
+                   transition-all duration-200 ${!canScrollLeft ? 'opacity-0 pointer-events-none' : 'opacity-0 hover:opacity-100'}`}
         onClick={() => scrollByAmount(-1)}
         disabled={!canScrollLeft}
         type="button"
@@ -82,7 +82,7 @@ function PropertyCarousel({properties, onFavoriteChange}) {
         className={`absolute -right-2 top-1/2 -translate-y-1/2 z-10 
                    w-11 h-11 rounded-full flex items-center justify-center
                    bg-background/90 hover:bg-background shadow-md border
-                   transition-all duration-200 ${!canScrollRight ? 'opacity-0 pointer-events-none' : 'opacity-0 group-hover:opacity-100'}`}
+                   transition-all duration-200 ${!canScrollRight ? 'opacity-0 pointer-events-none' : 'opacity-0 hover:opacity-100'}`}
         onClick={() => scrollByAmount(1)}
         disabled={!canScrollRight}
         type="button"
@@ -158,22 +158,25 @@ export default function Home() {
 
   useEffect(() => {
     const loadData = async () => {
-      try {
-        // Always fetch home listings (with or without token)
-        if (!isDataLoaded) {
-          await fetchHomeListings(token);
-        }
-        
-        // Only fetch user-specific data if authenticated
-        if (token) {
-          await Promise.all([
-            fetchFavorites(token, 0),
+      if (token) {
+        try {
+          // Only fetch if data isn't already loaded
+          if (!isDataLoaded) {
+            await Promise.all([
+              fetchFavorites(token, 0),
+              fetchHomeListings(token),
+              fetchVisitNotifications()
+            ]);
+          } else {
+            // Si ya hay datos, igual precarga notificaciones
             fetchVisitNotifications()
-          ]);
+          }
+        } catch (error) {
+          console.error('Error loading data:', error);
+        } finally {
+          setIsInitialLoad(false);
         }
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
+      } else {
         setIsInitialLoad(false);
       }
     };
@@ -237,11 +240,14 @@ export default function Home() {
               Ver todas
             </button>
           </div>
-          <PropertyCarousel 
+
+          <PropertyCarousel
             properties={popularProperties}
             onFavoriteChange={handleFavoriteChange}
           />
+
         </div>
+
       </section>
 
       {/* New Listings */}
@@ -258,9 +264,9 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {newListings.map((property, i) => (
-              <ExpandedPropertyCard 
-                key={i} 
-                {...property} 
+              <ExpandedPropertyCard
+                key={i}
+                {...property}
                 onFavoriteChange={(favorited) => handleFavoriteChange(property.id, favorited)}
               />
             ))}
