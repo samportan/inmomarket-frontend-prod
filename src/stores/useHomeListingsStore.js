@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import axios from 'axios';
-import { useFavoritesStore } from './useFavoritesStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -11,7 +10,7 @@ export const useHomeListingsStore = create((set, get) => ({
   error: null,
   isDataLoaded: false,
 
-  fetchHomeListings: async (token) => {
+  fetchHomeListings: async () => {
     if (get().isDataLoaded) {
       return;
     }
@@ -22,10 +21,6 @@ export const useHomeListingsStore = create((set, get) => ({
       const headers = {
         'Content-Type': 'application/json'
       };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
 
       const popularResponse = await axios.get(
         `${API_BASE_URL}/publications/mostPopularPublications`,
@@ -36,9 +31,6 @@ export const useHomeListingsStore = create((set, get) => ({
         `${API_BASE_URL}/publications/lastPublications`,
         { headers }
       );
-
-      const favorites = token ? useFavoritesStore.getState().favorites : [];
-      const favoriteIds = new Set(favorites.map(fav => fav.id));
 
       const transformProperty = (property, isNewListing = false) => {
         return {
@@ -52,7 +44,7 @@ export const useHomeListingsStore = create((set, get) => ({
           floors: property.propertyFloors,
           publisherName: property.userName,
           isNew: isNewListing,
-          favorited: favoriteIds.has(property.id),
+          favorited: false,
           description: property.propertyDescription,
           address: property.propertyAddress,
           neighborhood: property.neighborhood,
@@ -90,10 +82,6 @@ export const useHomeListingsStore = create((set, get) => ({
         errorMessage = error.response.data.message;
       } else if (error.message === 'Invalid response format from API') {
         errorMessage = 'Formato de respuesta inválido del servidor';
-      } else if (error.response?.status === 401 && token) {
-        errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente';
-      } else if (error.response?.status === 403) {
-        errorMessage = 'No tienes permiso para acceder a estos datos';
       } else if (error.response?.status === 404) {
         errorMessage = 'No se encontraron publicaciones';
       }
@@ -105,9 +93,9 @@ export const useHomeListingsStore = create((set, get) => ({
     }
   },
 
-  refreshHomeListings: async (token) => {
+  refreshHomeListings: async () => {
     set({ isDataLoaded: false });
-    return get().fetchHomeListings(token);
+    return get().fetchHomeListings();
   },
 
   updateFavoriteStatus: (propertyId, isFavorited) => {

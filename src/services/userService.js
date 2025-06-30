@@ -13,14 +13,6 @@ export const userService = {
         const data = await response.json();
 
         if (!response.ok) {
-            if (response.status === 401) {
-                // Clear session information from localStorage
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                // Redirect to login page
-                window.location.href = '/login';
-                return;
-            }
             throw new Error(data.message || 'Failed to fetch profile');
         }
 

@@ -164,7 +164,7 @@ export default function Home() {
           if (!isDataLoaded) {
             await Promise.all([
               fetchFavorites(token, 0),
-              fetchHomeListings(token),
+              fetchHomeListings(),
               fetchVisitNotifications()
             ]);
           } else {
@@ -177,7 +177,16 @@ export default function Home() {
           setIsInitialLoad(false);
         }
       } else {
-        setIsInitialLoad(false);
+        // If no token, still fetch home listings but not favorites
+        try {
+          if (!isDataLoaded) {
+            await fetchHomeListings();
+          }
+        } catch (error) {
+          console.error('Error loading home listings:', error);
+        } finally {
+          setIsInitialLoad(false);
+        }
       }
     };
 
