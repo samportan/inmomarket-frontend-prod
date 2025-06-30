@@ -40,7 +40,6 @@ export const usePublicationsStore = create((set, get) => ({
                 { headers }
             );
 
-            // Transform the data to match our ExpandedPropertyCard component
             const transformedPublications = response.data.map(pub => ({
                 id: pub.id,
                 imageUrl: pub.propertyImageUrls?.[0] || '/placeholder.svg',
@@ -104,7 +103,6 @@ export const usePublicationsStore = create((set, get) => ({
                 }
             });
 
-            // Transform the data and check favorite status for each publication
             const transformedPublications = await Promise.all(response.data.map(async pub => {
                 const isFavorite = await get().checkFavoriteStatus(token, pub.id);
                 return {
@@ -196,7 +194,6 @@ export const usePublicationsStore = create((set, get) => ({
                 availableTimes: pub.availableTimes || []
             };
 
-            // Update the publications array with the new publication
             set(state => ({
                 publications: state.publications.some(p => p.id === id)
                     ? state.publications.map(p => p.id === id ? transformedPublication : p)

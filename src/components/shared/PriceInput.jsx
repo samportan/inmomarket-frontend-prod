@@ -1,7 +1,5 @@
 import React from 'react'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { DollarSign } from 'lucide-react'
 
 export default function PriceInput({ value, onChange, required }) {
   const formatToCurrency = (rawValue) => {

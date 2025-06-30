@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import axios from 'axios';
 import { useFavoritesStore } from './useFavoritesStore';
 
-// Fallback URL in case environment variable is not loaded
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 export const useHomeListingsStore = create((set, get) => ({
@@ -13,7 +12,6 @@ export const useHomeListingsStore = create((set, get) => ({
   isDataLoaded: false,
 
   fetchHomeListings: async (token) => {
-    // If data is already loaded, don't fetch again
     if (get().isDataLoaded) {
       return;
     }
@@ -29,23 +27,19 @@ export const useHomeListingsStore = create((set, get) => ({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // Fetch popular properties
       const popularResponse = await axios.get(
         `${API_BASE_URL}/publications/mostPopularPublications`,
         { headers }
       );
 
-      // Fetch new listings
       const newListingsResponse = await axios.get(
         `${API_BASE_URL}/publications/lastPublications`,
         { headers }
       );
 
-      // Get favorites from the favorites store (only if authenticated)
       const favorites = token ? useFavoritesStore.getState().favorites : [];
       const favoriteIds = new Set(favorites.map(fav => fav.id));
 
-      // Transform the data to match our ExpandedPropertyCard component
       const transformProperty = (property, isNewListing = false) => {
         return {
           id: property.id,
@@ -75,7 +69,6 @@ export const useHomeListingsStore = create((set, get) => ({
         };
       };
 
-      // Check if the response data is in the expected format
       if (!Array.isArray(popularResponse.data) || !Array.isArray(newListingsResponse.data)) {
         throw new Error('Invalid response format from API');
       }
@@ -112,13 +105,11 @@ export const useHomeListingsStore = create((set, get) => ({
     }
   },
 
-  // Add a method to force refresh the data if needed
   refreshHomeListings: async (token) => {
     set({ isDataLoaded: false });
     return get().fetchHomeListings(token);
   },
 
-  // Update favorite status for a specific property
   updateFavoriteStatus: (propertyId, isFavorited) => {
     set((state) => ({
       popularProperties: state.popularProperties.map(property =>

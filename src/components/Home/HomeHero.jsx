@@ -58,13 +58,11 @@ export function HomeHero() {
 		setCurrentSlide(index)
 	}
 
-	// Reset timeout on every slide change
 	useEffect(() => {
 		clearAndSetTimeout()
 		return () => clearTimeout(timeoutRef.current)
 	}, [currentSlide])
 
-	// Clean up on unmount
 	useEffect(() => {
 		return () => clearTimeout(timeoutRef.current)
 	}, [])

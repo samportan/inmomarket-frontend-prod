@@ -9,7 +9,6 @@ export const useUserPublicationsStore = create((set, get) => ({
     isDataLoaded: false,
 
     fetchUserPublications: async (token, userId) => {
-        // If data is already loaded, don't fetch again
         if (get().isDataLoaded) {
             return;
         }
@@ -37,7 +36,6 @@ export const useUserPublicationsStore = create((set, get) => ({
 
             console.log('API Response:', response.data)
 
-            // Transform the data
             const transformedPublications = response.data.map(pub => ({
                 id: pub.id,
                 imageUrl: pub.propertyImageUrls?.[0] || '/placeholder.svg',
@@ -85,7 +83,6 @@ export const useUserPublicationsStore = create((set, get) => ({
         }
     },
 
-    // Add a method to force refresh the data if needed
     refreshUserPublications: async (token, userId) => {
         set({ isDataLoaded: false });
         return get().fetchUserPublications(token, userId);

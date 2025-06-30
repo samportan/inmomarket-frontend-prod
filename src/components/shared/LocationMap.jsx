@@ -11,7 +11,6 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 })
 
-// El Salvador's center coordinates
 const DEFAULT_CENTER = [13.7942, -88.8965]
 const DEFAULT_ZOOM = 8
 

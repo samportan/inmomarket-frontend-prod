@@ -8,7 +8,7 @@ export const useFavoritesStore = create((set, get) => ({
   totalPages: 0,
   currentPage: 0,
   totalElements: 0,
-  pendingToggles: new Set(), // Track pending toggle operations to prevent duplicate requests
+  pendingToggles: new Set(),
 
   fetchFavorites: async (token, page = 0) => {
     try {
@@ -23,7 +23,6 @@ export const useFavoritesStore = create((set, get) => ({
         }
       );
 
-      // Transform the data to match our ExpandedPropertyCard component
       const transformedFavorites = response.data.content.map(fav => ({
         id: fav.publicationId,
         imageUrl: fav.propertyImageUrls?.[0] || '/placeholder.svg',
@@ -66,49 +65,34 @@ export const useFavoritesStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Optimistic toggle that immediately updates the UI for better UX
-   * Strategy:
-   * 1. Immediately remove item from UI
-   * 2. Make API call in background
-   * 3. Rollback on error
-   * 4. Track pending operations to prevent duplicates
-   */
+
   toggleFavoriteOptimistic: async (token, publicationId) => {
     const { favorites, pendingToggles } = get();
     
-    // Check if this toggle is already pending
     if (pendingToggles.has(publicationId)) {
       return { success: false, error: 'Operación en progreso' };
     }
 
-    // Find the property to remove
     const propertyIndex = favorites.findIndex(fav => fav.id === publicationId);
     if (propertyIndex === -1) {
       return { success: false, error: 'Propiedad no encontrada' };
     }
 
-    // Store the original state for potential rollback
     const originalFavorites = [...favorites];
     const removedProperty = favorites[propertyIndex];
 
-    // Optimistically remove the property from the list
     const updatedFavorites = favorites.filter(fav => fav.id !== publicationId);
     
-    // Update total elements count
     const newTotalElements = Math.max(0, get().totalElements - 1);
     
-    // Recalculate total pages (assuming 12 items per page)
     const itemsPerPage = 12;
     const newTotalPages = Math.ceil(newTotalElements / itemsPerPage);
     
-    // Adjust current page if necessary
     let newCurrentPage = get().currentPage;
     if (updatedFavorites.length === 0 && newCurrentPage > 0) {
       newCurrentPage = Math.max(0, newCurrentPage - 1);
     }
 
-    // Immediately update the UI
     set({
       favorites: updatedFavorites,
       totalElements: newTotalElements,
@@ -117,7 +101,6 @@ export const useFavoritesStore = create((set, get) => ({
       pendingToggles: new Set([...pendingToggles, publicationId])
     });
 
-    // Make the API call in the background
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/favorites/toggle`,
@@ -130,14 +113,12 @@ export const useFavoritesStore = create((set, get) => ({
         }
       );
       
-      // Remove from pending toggles on success
       set({
         pendingToggles: new Set([...get().pendingToggles].filter(id => id !== publicationId))
       });
       
       return { success: true, data: response.data };
     } catch (error) {
-      // Rollback on error - restore the original state
       set({
         favorites: originalFavorites,
         totalElements: get().totalElements + 1,
@@ -152,7 +133,6 @@ export const useFavoritesStore = create((set, get) => ({
     }
   },
 
-  // Legacy method for backward compatibility (used in other components)
   toggleFavorite: async (token, publicationId) => {
     try {
       const response = await axios.post(
@@ -175,7 +155,6 @@ export const useFavoritesStore = create((set, get) => ({
     }
   },
 
-  // Method to refresh favorites list (useful after optimistic updates)
   refreshFavorites: async (token) => {
     const { currentPage } = get();
     await get().fetchFavorites(token, currentPage);

@@ -411,28 +411,6 @@ export default function PublicationsList() {
           </div>
         )}
 
-        {/* Pagination */}
-        {filteredPublications.length > 0 && (
-          <div className="mt-8 flex justify-center">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                Anterior
-              </Button>
-              <Button variant="outline" size="sm">
-                1
-              </Button>
-              <Button variant="outline" size="sm">
-                2
-              </Button>
-              <Button variant="outline" size="sm">
-                3
-              </Button>
-              <Button variant="outline" size="sm">
-                Siguiente
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

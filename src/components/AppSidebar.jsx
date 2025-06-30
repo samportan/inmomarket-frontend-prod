@@ -70,7 +70,6 @@ export function AppSidebar({ props }) {
     return true;
   });
 
-  // Helper function to check if a route is active
   const isRouteActive = (url) => {
     if (url === "/") {
       return location.pathname === "/";
@@ -78,7 +77,6 @@ export function AppSidebar({ props }) {
     return location.pathname.startsWith(url);
   };
 
-  // Handle mobile navigation - close sidebar after clicking
   const handleMobileNavigation = () => {
     if (isMobile) {
       setOpenMobile(false);
@@ -150,7 +148,6 @@ export function AppSidebar({ props }) {
       </SidebarContent>
       <SidebarFooter className="py-4">
         {" "}
-        {/* Adjusted padding for more height */}
         <NavUser />
       </SidebarFooter>
     </Sidebar>

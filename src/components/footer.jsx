@@ -5,7 +5,6 @@ export default function Footer() {
     <footer className="bg-green-50 dark:bg-secondary text-secondary-foreground py-12">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Brand Section */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-green-800 dark:text-secondary-foreground">InmoMarket</h3>
             <p className="text-green-600 dark:text-muted-foreground text-sm">
@@ -16,7 +15,6 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Navigation Links */}
           <div className="space-y-4">
             <h4 className="font-semibold text-green-800 dark:text-secondary-foreground">Navegación</h4>
             <ul className="space-y-2 text-sm text-green-600 dark:text-muted-foreground">
@@ -43,7 +41,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Account & Support */}
           <div className="space-y-4">
             <h4 className="font-semibold text-green-800 dark:text-secondary-foreground">Cuenta</h4>
             <ul className="space-y-2 text-sm text-green-600 dark:text-muted-foreground">
