@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { useReportsStore } from "@/stores/useReportsStore";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -9,10 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import ReportResolutionDialog from "@/components/ReportResolutionDialog";
 
 export default function Reports() {
   const { token } = useAuthStore();
-  const { reports, loading, error, fetchReports, resolveReport, currentPage, totalPages, totalElements } = useReportsStore();
+  const { reports, loading, error, fetchReports, resolveReport, refreshReports, currentPage, totalPages, totalElements, pageSize } = useReportsStore();
+  
+  const [resolutionDialog, setResolutionDialog] = useState({
+    isOpen: false,
+    reportId: null,
+    action: null
+  });
 
   useEffect(() => {
     if (token) {
@@ -26,14 +33,31 @@ export default function Reports() {
     }
   };
 
-  const handleResolveReport = async (reportId, action) => {
-    const result = await resolveReport(token, reportId, action);
+  const handlePageSizeChange = (newSize) => {
+    fetchReports(token, 0, newSize);
+  };
+
+  const handleRefresh = () => {
+    refreshReports(token);
+  };
+
+  const handleResolveReport = async (reportId, action, feedback) => {
+    const result = await resolveReport(token, reportId, action, feedback);
     
     if (result.success) {
       toast.success(result.message);
+      setResolutionDialog({ isOpen: false, reportId: null, action: null });
     } else {
       toast.error(result.message);
     }
+  };
+
+  const openResolutionDialog = (reportId, action) => {
+    setResolutionDialog({ isOpen: true, reportId, action });
+  };
+
+  const closeResolutionDialog = () => {
+    setResolutionDialog({ isOpen: false, reportId: null, action: null });
   };
 
   const getStatusVariant = (status) => {
@@ -84,6 +108,22 @@ export default function Reports() {
             title="Reportes"
             description={`Total de reportes: ${totalElements}`}
           />
+          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+            <svg 
+              className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+              />
+            </svg>
+            Actualizar
+          </Button>
         </div>
 
         {reports.length === 0 ? (
@@ -127,13 +167,33 @@ export default function Reports() {
                     <div>
                       <p className="text-sm font-medium text-gray-500">Fecha</p>
                       <p className="text-sm">
-                        {report.localDateTime ? (
-                          format(new Date(report.localDateTime), 'PPPp', { locale: es })
+                        {report.reportDate ? (
+                          format(new Date(report.reportDate), 'PPPp', { locale: es })
                         ) : (
                           'Fecha no disponible'
                         )}
                       </p>
                     </div>
+                    {report.adminFeedback && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Feedback del Admin</p>
+                        <p className="text-sm">{report.adminFeedback}</p>
+                      </div>
+                    )}
+                    {report.reviewedAt && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Revisado el</p>
+                        <p className="text-sm">
+                          {format(new Date(report.reviewedAt), 'PPPp', { locale: es })}
+                        </p>
+                      </div>
+                    )}
+                    {report.adminName && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Revisado por</p>
+                        <p className="text-sm">{report.adminName}</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
@@ -147,14 +207,14 @@ export default function Reports() {
                       <Button 
                         variant="destructive" 
                         size="sm"
-                        onClick={() => handleResolveReport(report.id, 'DISMISS')}
+                        onClick={() => openResolutionDialog(report.id, 'DISMISS')}
                         disabled={loading}
                       >
                         Rechazar
                       </Button>
                       <Button 
                         size="sm"
-                        onClick={() => handleResolveReport(report.id, 'APPROVE')}
+                        onClick={() => openResolutionDialog(report.id, 'APPROVE')}
                         disabled={loading}
                       >
                         Resolver
@@ -167,28 +227,58 @@ export default function Reports() {
           </div>
         )}
 
-        {totalPages > 1 && (
-          <div className="mt-8 flex justify-center items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 0}
-            >
-              Anterior
-            </Button>
-            <span className="px-4">
-              Página {currentPage + 1} de {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages - 1}
-            >
-              Siguiente
-            </Button>
+        {reports.length > 0 && (
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <div className="flex items-center gap-2 text-sm">
+              <span>Mostrar:</span>
+              <select 
+                value={pageSize} 
+                onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
+                className="border rounded px-2 py-1"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+              <span>por página</span>
+            </div>
+            <div className="text-sm text-gray-500">
+              Mostrando {reports.length} de {totalElements} reportes
+            </div>
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 0}
+                >
+                  Anterior
+                </Button>
+                <span className="px-4">
+                  Página {currentPage + 1} de {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages - 1}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
+      
+      <ReportResolutionDialog
+        isOpen={resolutionDialog.isOpen}
+        onClose={closeResolutionDialog}
+        onResolve={handleResolveReport}
+        reportId={resolutionDialog.reportId}
+        action={resolutionDialog.action}
+        loading={loading}
+      />
     </div>
   );
 }

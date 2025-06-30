@@ -25,6 +25,11 @@ export default function Register() {
       .match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
+  const validatePhone = (phone) => {
+    if (!phone) return true; // Phone is optional
+    return /^\+?[1-9]\d{1,14}$/.test(phone);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -50,6 +55,12 @@ export default function Register() {
       return;
     }
 
+    if (formData.phone && !validatePhone(formData.phone)) {
+      toast.error("Por favor ingresa un número de teléfono válido");
+      setIsLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast.error("Las contraseñas no coinciden");
       setIsLoading(false);
@@ -67,7 +78,7 @@ export default function Register() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        phone: formData.phone || undefined
+        phoneNumber: formData.phone || undefined
       });
 
       toast.success("¡Registro exitoso!");
@@ -140,7 +151,7 @@ export default function Register() {
               <Input 
                 type="text" 
                 name="phone"
-                placeholder="(000) 000-0000" 
+                placeholder="+xxxxxxxxxx" 
                 value={formData.phone}
                 onChange={handleChange}
                 disabled={isLoading}

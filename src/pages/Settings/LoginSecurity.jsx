@@ -11,10 +11,6 @@ const LoginSecurity = () => {
   return (
     <div className="space-y-6">
       <UpdatePasswordSection />
-      <Separator />
-      <SocialAccountsSection />
-      <Separator />
-      <DeactivateAccountSection />
     </div>
   );
 };

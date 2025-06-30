@@ -23,9 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const sidebarItems = [
   { id: "personal", label: "Perfil", icon: <User /> },
-  { id: "security", label: "Login & Security", icon: <Lock /> },
-  { id: "notifications", label: "Notifications", icon: <Bell /> },
-  { id: "languages", label: "Languages", icon: <Globe /> },
+  { id: "security", label: "Seguridad", icon: <Lock /> },
 ];
 
 const Settings = () => {
@@ -40,7 +38,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-2">
           {sidebarItems.map((item) => (
             <TabsTrigger key={item.id} value={item.id}>
               {item.label}
@@ -64,9 +62,9 @@ const Settings = () => {
         <TabsContent value="security">
           <Card>
             <CardHeader>
-              <CardTitle>Login & Security</CardTitle>
+              <CardTitle>Inicio de sesión y seguridad</CardTitle>
               <CardDescription>
-                Manage your login credentials and security settings.
+                Gestiona tus credenciales de inicio de sesión y ajustes de seguridad.
               </CardDescription>
             </CardHeader>
             <CardContent>
